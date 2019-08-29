@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
-import sys, os
+import os
 import re
+import sys
 from libtbx import cpp_function_name
 symbol_not_found_pat = re.compile(
   r"[Ss]ymbol[ ]not[ ]found: \s* (\w+) $", re.X | re.M | re.S)
@@ -158,7 +159,6 @@ sizeof_void_ptr = c_sizeof("void*")
 class gcc_version(object):
 
   def __init__(self):
-    import re
     pat = r" \s* = \s* (\d+) \s+"
     m = re.search("__GNUC__ %s __GNUC_MINOR__ %s __GNUC_PATCHLEVEL__ %s"
                   % ((pat,)*3),
@@ -180,29 +180,6 @@ class gcc_version(object):
     else:
       return "GCC, it is not"
 
-
-class injector(object):
-
-  class __metaclass__(meta_class):
-
-    def __init__(self, name, bases, dict):
-      if (len(bases) > 1):
-        # bases[0] is this injector
-        target = bases[1] # usually a Boost.Python class
-        def setattr_from_dict(d):
-          for k,v in d.items():
-            if (k not in (
-                  "__init__",
-                  "__del__",
-                  "__module__",
-                  "__file__",
-                  "__dict__")):
-              if (k != "__doc__" or v is not None):
-                setattr(target,k,v)
-        setattr_from_dict(dict)
-        for b in bases[2:]: # usually mix-in classes, if any
-          setattr_from_dict(b.__dict__)
-      return type.__init__(self, name, (), {})
 
 def inject(target_class, *mixin_classes):
    '''Add entries from python class dictionaries to a boost extension class.
